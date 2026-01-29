@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,6 +31,11 @@ const loginFormSchema = z.object({
     .max(18, "Password must be at most 18 characters"),
 });
 
+const onSubmit = async (data) => {
+  console.log("Submit started");
+  console.log("Submit finished");
+};
+
 function LoginPage() {
   const {
     register,
@@ -44,11 +49,6 @@ function LoginPage() {
     },
     mode: "onSubmit",
   });
-
-  const onSubmit = async (data) => {
-    console.log("Submit started");
-    console.log("Submit finished");
-  };
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
@@ -88,10 +88,16 @@ function LoginPage() {
             </FieldGroup>
           </CardContent>
 
-          <CardFooter className="mt-5">
+          <CardFooter className="mt-5 flex flex-col gap-4">
             <Button className="w-full" type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Logging in..." : "Login"}
             </Button>
+            <span>
+              Create an Account ?{" "}
+              <NavLink className="text-blue-500" to="/register">
+                Register
+              </NavLink>
+            </span>
           </CardFooter>
         </form>
       </Card>
