@@ -1,9 +1,8 @@
 "use client";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,6 +18,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { login } from "@/services/auth";
 
 /* -------------------- */
 /* Zod schema (JS-safe) */
@@ -31,13 +31,10 @@ const loginFormSchema = z.object({
     .max(18, "Password must be at most 18 characters"),
 });
 
-const onSubmit = async (data) => {
-  console.log("Submit started");
-  console.log("Submit finished");
-};
-
 function LoginPage() {
   const {
+    setError,
+    clearErrors,
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
@@ -49,6 +46,19 @@ function LoginPage() {
     },
     mode: "onSubmit",
   });
+  const navigate = useNavigate();
+
+  const handleLogin = async (values) => {
+    try {
+      await login(values);
+      navigate("/dashboard");
+    } catch (err) {
+      setError("root", {
+        type: "server",
+        message: err.message || "Login failed",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center p-4">
@@ -56,7 +66,7 @@ function LoginPage() {
         <CardHeader className="flex justify-center">
           <CardTitle>Login</CardTitle>
         </CardHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(handleLogin)}>
           <CardContent>
             <FieldGroup>
               {/* Email */}
@@ -68,7 +78,11 @@ function LoginPage() {
                   placeholder="johndoe@email.com"
                   autoComplete="email"
                   aria-invalid={!!errors.email}
-                  {...register("email")}
+                  {...register("email", {
+                    onChange: () => {
+                      clearErrors("root");
+                    },
+                  })}
                 />
                 {errors.email && <FieldError errors={[errors.email]} />}
               </Field>
@@ -81,14 +95,20 @@ function LoginPage() {
                   type="password"
                   autoComplete="current-password"
                   aria-invalid={!!errors.password}
-                  {...register("password")}
+                  {...register("password", {
+                    onChange: () => clearErrors("root"),
+                  })}
                 />
                 {errors.password && <FieldError errors={[errors.password]} />}
               </Field>
             </FieldGroup>
           </CardContent>
-
           <CardFooter className="mt-5 flex flex-col gap-4">
+            {errors.root && (
+              <p className="text-sm text-red-500 text-center">
+                {errors.root.message}
+              </p>
+            )}
             <Button className="w-full" type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Logging in..." : "Login"}
             </Button>
