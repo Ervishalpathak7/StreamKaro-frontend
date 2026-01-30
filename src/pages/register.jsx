@@ -1,10 +1,11 @@
 import * as z from "zod";
-import { useForm , Controller} from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { signup } from "@/services/auth";
 
 import {
   Card,
@@ -37,13 +38,11 @@ const registerFormSchema = z.object({
   }),
 });
 
-const onSubmit = async (data) => {
-  console.log(data);
-};
-
 function RegisterPage() {
   const {
     register,
+    clearErrors,
+    setError,
     handleSubmit,
     control,
     formState: { errors, isSubmitting },
@@ -57,7 +56,25 @@ function RegisterPage() {
     },
     mode: "onSubmit",
   });
-
+  const navigate = useNavigate();
+  const handleRegister = async (data) => {
+    try {
+      await signup(data);
+      navigate("/dashboard");
+    } catch (err) {
+      if (err.message === "Email already registered") {
+        setError("email", {
+          type: "server",
+          message: err.message,
+        });
+      } else {
+        setError("root", {
+          type: "server",
+          message: err.message || "Signup failed",
+        });
+      }
+    }
+  };
   return (
     <div className=" bg-black min-h-screen flex justify-center items-center p-4">
       <Card className="w-full max-w-sm">
@@ -65,7 +82,7 @@ function RegisterPage() {
           <CardTitle>Signup</CardTitle>
         </CardHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(handleRegister)}>
           <CardContent>
             <FieldGroup>
               {/* Name */}
@@ -131,6 +148,11 @@ function RegisterPage() {
             </FieldGroup>
           </CardContent>
           <CardFooter className="mt-5 flex flex-col gap-4">
+            {errors.root && (
+              <p className="text-sm text-red-500 text-center">
+                {errors.root.message}{" "}
+              </p>
+            )}
             <Button className="w-full" type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Signing up..." : "Sign up"}
             </Button>
